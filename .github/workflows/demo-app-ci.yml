@@ -1,0 +1,104 @@
+# .github/workflows/demo-app-ci.yml
+name: Demo App CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'demo-app/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'demo-app/**'
+
+jobs:
+  # Backend Tests
+  backend-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./demo-app/backend
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: demo-app/backend/package-lock.json
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run linter
+        run: npm run lint || echo "Linting step (add script to package.json)"
+      
+      - name: Run tests
+        run: npm test
+        env:
+          NODE_ENV: test
+          MONGODB_URI: mongodb://localhost:27017/test
+      
+      - name: Build
+        run: npm run build || echo "Build step (if applicable)"
+  
+  # Frontend Tests
+  frontend-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./demo-app/frontend
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: demo-app/frontend/package-lock.json
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run linter
+        run: npm run lint || echo "Linting step"
+      
+      - name: Run tests
+        run: npm test -- --passWithNoTests
+      
+      - name: Build
+        run: npm run build
+        env:
+          CI: true
+  
+  # Security Scan
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Run npm audit (backend)
+        working-directory: ./demo-app/backend
+        run: npm audit --audit-level=high || true
+      
+      - name: Run npm audit (frontend)
+        working-directory: ./demo-app/frontend
+        run: npm audit --audit-level=high || true
+
+  # This job will intentionally fail for demo purposes
+  # We'll use this to trigger the DevOps Guardian Agent
+  intentional-failure:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[trigger-failure]')
+    steps:
+      - name: This step will fail for demo
+        run: |
+          echo "Simulating a CI failure for DevOps Guardian Agent demo"
+          exit 1
