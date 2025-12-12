@@ -15,7 +15,7 @@
   "main": "index.js",
   "scripts": {
     "test": "jest --coverage",
-    "test:integration": "jest src/__tests__ --coverage",
+    "test:integration": "jest --coverage=false",
     "start": "node src/app.js",
     "dev": "nodemon src/app.js"
   },
