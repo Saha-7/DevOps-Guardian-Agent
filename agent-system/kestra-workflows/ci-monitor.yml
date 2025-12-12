@@ -1,0 +1,85 @@
+id: ci-monitor
+namespace: devops.guardian
+description: |
+  Monitors GitHub Actions workflow for failures and sends failure logs to the agent for analysis.
+  This workflow periodically checks for failed CI/CD runs and extracts error information.
+
+labels:
+  team: devops
+  environment: production
+  purpose: ci-monitoring
+
+variables:
+  project_path: /home/saha7pritam/devops-guardian-agent/agent-system
+
+tasks:
+  - id: check_failed_runs
+    type: io.kestra.plugin.scripts.node.Script
+    description: Execute Node.js script to check for failed GitHub Actions runs
+    
+    # Script configuration
+    script: |
+      // This will execute the run-fetch.js script
+      // The script uses dotenv to load environment variables from .env file
+      const runFetch = require('{{vars.project_path}}/services/run-fetch.js');
+      
+      console.log('Starting GitHub Actions CI monitor check...');
+      
+      // Execute the main function
+      runFetch.main()
+        .then(() => {
+          console.log('Check completed successfully');
+          process.exit(0);
+        })
+        .catch((error) => {
+          console.error('Check failed:', error);
+          process.exit(1);
+        });
+    
+    # Use the project directory
+    workingDirectory: "{{vars.project_path}}"
+    
+    # Environment variables (can be overridden)
+    env:
+      NODE_ENV: production
+    
+    # Script behavior
+    warningOnStdErr: false  # Don't fail on stderr warnings
+    
+    # Retry policy
+    retry:
+      type: constant
+      interval: PT5M  # Wait 5 minutes between retries
+      maxAttempt: 3   # Retry up to 3 times
+      
+  - id: log_completion
+    type: io.kestra.core.tasks.log.Log
+    description: Log completion status
+    message: |
+      CI Monitor check completed at {{execution.startDate}}
+      Execution ID: {{execution.id}}
+      Status: Success
+
+# Run every 10 minutes
+triggers:
+  - id: schedule
+    type: io.kestra.core.models.triggers.types.Schedule
+    cron: "*/10 * * * *"  # Every 10 minutes
+    description: Check for failed GitHub Actions runs every 10 minutes
+
+# Alternative: Run every 5 minutes (more frequent)
+# triggers:
+#   - id: schedule
+#     type: io.kestra.core.models.triggers.types.Schedule
+#     cron: "*/5 * * * *"
+#     description: Check for failed GitHub Actions runs every 5 minutes
+
+# Error handling
+errors:
+  - id: handle_error
+    type: io.kestra.core.tasks.log.Log
+    message: |
+      ⚠️ Error occurred during CI monitoring
+      Execution ID: {{execution.id}}
+      Error: {{execution.error}}
+      Time: {{execution.startDate}}
