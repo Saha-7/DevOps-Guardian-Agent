@@ -1,14 +1,14 @@
 module.exports = {
+  rootDir: '.', 
   testEnvironment: 'node',
   coverageDirectory: 'coverage',
   collectCoverageFrom: [
-    'src/**/*.js',
-    '!src/__tests__/**',
+    'src//*.js',
+    '!src/tests/',
     '!src/index.js'
   ],
   testMatch: [
-    '**/__tests__/**/*.test.js',
-    '**/?(*.)+(spec|test).js'
+    '<rootDir>/src/tests/*/.test.js' 
   ],
   coverageThreshold: {
     global: {
