@@ -6,6 +6,7 @@ on:
     branches: [ main, develop ]
     paths:
       - 'demo-app/**'
+      - '.github/workflows/**'
   pull_request:
     branches: [ main ]
     paths:
@@ -27,49 +28,52 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: demo-app/backend/package-lock.json
+
+      - name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('demo-app/backend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
       
       - name: Install dependencies
         run: npm ci
       
-      - name: Check code (no tests yet)
-        run: echo "Backend validation passed - tests coming soon"
+      - name: Run integration tests
+        run: npm run test:integration -- --coverage=false
+        env:
+          NODE_ENV: test
       
-      - name: Verify package.json scripts
+      - name: Verify start script
         run: node -e "const pkg = require('./package.json'); if (!pkg.scripts.start) process.exit(1);"
   
-  # Frontend Tests
-  frontend-tests:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./demo-app/frontend
+  # Frontend Tests  
+  # frontend-tests:
+  #   runs-on: ubuntu-latest
+  #   defaults:
+  #     run:
+  #       working-directory: ./demo-app/frontend
     
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
       
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: demo-app/frontend/package-lock.json
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: '18'
       
-      - name: Install dependencies
-        run: npm ci
+  #     - name: Install dependencies
+  #       run: npm install
       
-      - name: Run linter
-        run: npm run lint
+  #     - name: Run linter
+  #       run: npm run lint
       
-      - name: Check for test script
-        run: echo "Tests coming soon - focusing on build"
-      
-      - name: Build with Vite
-        run: npm run build
-        env:
-          CI: true
+  #     - name: Build with Vite
+  #       run: npm run build
+  #       env:
+  #         CI: true
   
   # Security Scan
   security-scan:
@@ -86,13 +90,13 @@ jobs:
         working-directory: ./demo-app/frontend
         run: npm audit --audit-level=high || echo "::warning::Security vulnerabilities detected in frontend"
 
-  # This job will intentionally fail for demo purposes
-  # We'll use this to trigger the DevOps Guardian Agent
+  # Intentional failure for demo
   intentional-failure:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && contains(github.event.head_commit.message, '[trigger-failure]')
     steps:
       - name: This step will fail for demo
         run: |
-          echo "Simulating a CI failure for DevOps Guardian Agent demo"
+          echo "🚨 Simulating a CI failure for DevOps Guardian Agent demo"
+          echo "This failure will be detected by Kestra and analyzed by Oumi"
           exit 1

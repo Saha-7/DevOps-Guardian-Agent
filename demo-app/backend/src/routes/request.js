@@ -55,10 +55,10 @@ requestRouter.post("/request/send/:status/:toUserId", userAuth, async (req, res)
         "A new friend request from " + req.user.firstName,
         req.user.firstName + " "+ status +  " " + toUser.firstName
       );
-      console.log("Email sent successfully:", emailRes);
+      // console.log("Email sent successfully:", emailRes);
     } catch (emailError) {
       // Don't fail the entire request if email fails
-      console.log("Email sending failed (but request succeeded):", emailError.message);
+      // console.log("Email sending failed (but request succeeded):", emailError.message);
     }
 
     res.json({
@@ -94,7 +94,7 @@ requestRouter.post("/request/review/:status/:requestId", userAuth, async(req,res
       toUserId: loggedInUser._id,
       status: "interested"
     })
-    console.log(connectionRequest)
+    // console.log(connectionRequest)
     if (!connectionRequest){
       return res.status(404).json({
         message: "connection request not found"
@@ -106,7 +106,7 @@ requestRouter.post("/request/review/:status/:requestId", userAuth, async(req,res
 
     // Save the updated connection request
     const data = await connectionRequest.save()
-    console.log(data)
+    // console.log(data)
 
     res.json({
       message: "Connection request " + status + " successfully",
