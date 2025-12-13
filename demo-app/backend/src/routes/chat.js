@@ -11,7 +11,7 @@ chatRouter.post("/chat", async(req,res)=>{
     }
 
     try {
-        // 🔹 Dummy chat object (placeholder for real DB logic)
+        
         const chat = {
             id: "dummy-chat-id-123",
             participants: [userId, targetUserId],
@@ -19,7 +19,7 @@ chatRouter.post("/chat", async(req,res)=>{
             createdAt: new Date()
         };
 
-        // Return a success response
+        
         return res.status(200).json({
             message: "Chat endpoint working",
             chat
