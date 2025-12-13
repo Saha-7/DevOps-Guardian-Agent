@@ -26,7 +26,6 @@ profileRouter.get("/profile/view", userAuth, async (req, res) => {
 //   const {_id} = decodedMessage;
 //   console.log("Loggeded user ID:", _id);
 //   const user = await User.findOne({_id: _id});
-//  // console.log("User found:", user?.firstName+ " "+user?.lastName);
 //   if(!user){
 //     throw new Error("User not found");
 //   }
