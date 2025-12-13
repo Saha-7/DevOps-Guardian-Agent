@@ -19,32 +19,32 @@ jobs:
     defaults:
       run:
         working-directory: ./demo-app/backend
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
           cache-dependency-path: demo-app/backend/package-lock.json
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run integration tests
         run: |
           npm run test:integration -- --coverage=false 2>&1 | tee result.log
         env:
           NODE_ENV: test
         continue-on-error: true 
-      
+
       - name: Verify start script
         run: node -e "const pkg = require('./package.json'); if (!pkg.scripts.start) process.exit(1);"
         continue-on-error: true
-      
+
       - name: Notify Kestra on failure
         if: failure()
         run: |
@@ -68,56 +68,45 @@ jobs:
         env:
           KESTRA_WEBHOOK_URL: ${{ secrets.KESTRA_WEBHOOK_URL }}
 
-  
-  # Frontend Tests  
-  # frontend-tests:
-  #   runs-on: ubuntu-latest
-  #   defaults:
-  #     run:
-  #       working-directory: ./demo-app/frontend
-    
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-      
-  #     - name: Setup Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: '18'
-      
-  #     - name: Install dependencies
-  #       run: npm install
-      
-  #     - name: Run linter
-  #       run: npm run lint
-      
-  #     - name: Build with Vite
-  #       run: npm run build
-  #       env:
-  #         CI: true
-  
   # Security Scan
   security-scan:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Run npm audit (backend)
         working-directory: ./demo-app/backend
         run: npm audit --audit-level=high || echo "::warning::Security vulnerabilities detected in backend"
-      
+
       - name: Run npm audit (frontend)
         working-directory: ./demo-app/frontend
         run: npm audit --audit-level=high || echo "::warning::Security vulnerabilities detected in frontend"
 
-  # Intentional failure for demo
+  # Intentional failure for Kestra testing
   intentional-failure:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'push' && github.event.head_commit && contains(github.event.head_commit.message, '[trigger-failure]') }}
     steps:
-      - name: This step will fail for demo
+      - name: Fail intentionally for Kestra
         run: |
-          echo "🚨 Simulating a CI failure for DevOps Guardian Agent demo"
-          echo "This failure will be detected by Kestra and analyzed by Oumi"
+          echo "🚨 Simulating a CI failure for Kestra test"
           exit 1
+
+      - name: Notify Kestra on intentional failure
+        if: failure()
+        run: |
+          curl -X POST "$KESTRA_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n \
+              --arg repo "${{ github.repository }}" \
+              --arg workflow "${{ github.workflow }}" \
+              --arg job "intentional-failure" \
+              --arg status "failed" \
+              --arg branch "${{ github.ref_name }}" \
+              --arg commit "${{ github.sha }}" \
+              --arg actor "${{ github.actor }}" \
+              --arg logs "Intentional failure triggered for testing" \
+              '{repository: $repo, workflow: $workflow, job: $job, status: $status, branch: $branch, commit: $commit, actor: $actor, logs: $logs}')"
+        env:
+          KESTRA_WEBHOOK_URL: ${{ secrets.KESTRA_WEBHOOK_URL }}
