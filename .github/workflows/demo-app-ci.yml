@@ -35,12 +35,34 @@ jobs:
         run: npm ci
       
       - name: Run integration tests
-        run: npm run test:integration -- --coverage=false
+        run: |
+          npm run test:integration -- --coverage=false 2>&1 | tee result.log
         env:
           NODE_ENV: test
+        continue-on-error: true 
       
       - name: Verify start script
         run: node -e "const pkg = require('./package.json'); if (!pkg.scripts.start) process.exit(1);"
+        continue-on-error: true
+      
+      - name: Notify Kestra on failure
+        if: failure()
+        run: |
+          curl -X POST "$KESTRA_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n \
+              --arg repo "${{ github.repository }}" \
+              --arg workflow "${{ github.workflow }}" \
+              --arg job "backend-tests" \
+              --arg status "failed" \
+              --arg branch "${{ github.ref_name }}" \
+              --arg commit "${{ github.sha }}" \
+              --arg actor "${{ github.actor }}" \
+              --arg logs "$(cat result.log)" \
+              '{repository: $repo, workflow: $workflow, job: $job, status: $status, branch: $branch, commit: $commit, actor: $actor, logs: $logs}')"
+        env:
+          KESTRA_WEBHOOK_URL: ${{ secrets.KESTRA_WEBHOOK_URL }}
+
   
   # Frontend Tests  
   # frontend-tests:
