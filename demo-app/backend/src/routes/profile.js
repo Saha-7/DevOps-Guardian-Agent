@@ -15,7 +15,6 @@ profileRouter.get("/profile/view", userAuth, async (req, res) => {
 
 
 // const cookies = req.cookies
-//   //console.log("Cookies received:", cookies);
 
 //   const {token} = cookies;
 //   if(!token){
