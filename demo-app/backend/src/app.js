@@ -9,7 +9,6 @@ const http = require("http")
 
 
 require('./utils/cronjob')
-throw new Error("Intentional backend crash for CI demo");
 
 
 const app = express();
@@ -137,12 +136,13 @@ app.patch("/user/:userId", async (req, res) => {
 });
 
 connectDB()
-  .then(() => {
+  
+  .catch((err) => {
+    console.log("Error connecting to database", err);
+  });
+.then(() => {
     console.log("Connected to database successfully");
     server.listen(process.env.PORT, () => {
       console.log("server is running on port 3000");
     });
   })
-  .catch((err) => {
-    console.log("Error connecting to database", err);
-  });
