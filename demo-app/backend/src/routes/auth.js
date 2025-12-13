@@ -59,7 +59,7 @@ authRouter.post("/login", async (req, res) => {
         expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
       });
 
-      // Method 1: Create a new object with only safe fields
+      
       const userDetail = {
         _id: user._id,
         firstName: user.firstName,
