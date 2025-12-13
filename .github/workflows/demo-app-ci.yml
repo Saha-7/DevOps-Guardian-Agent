@@ -3,7 +3,7 @@ name: Demo App CI/CD
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: ["**"]   # Allow trigger on all branches (best for hackathon testing)
     paths:
       - 'demo-app/**'
       - '.github/workflows/**'
@@ -13,7 +13,9 @@ on:
       - 'demo-app/**'
 
 jobs:
+  # ------------------------------------------------------------------
   # Backend Tests
+  # ------------------------------------------------------------------
   backend-tests:
     runs-on: ubuntu-latest
     defaults:
@@ -39,7 +41,7 @@ jobs:
           npm run test:integration -- --coverage=false 2>&1 | tee result.log
         env:
           NODE_ENV: test
-        continue-on-error: true 
+        continue-on-error: true
 
       - name: Verify start script
         run: node -e "const pkg = require('./package.json'); if (!pkg.scripts.start) process.exit(1);"
@@ -50,9 +52,12 @@ jobs:
         run: |
           LOGS="[Logs unavailable]"
           if [ -f result.log ]; then
-            LOGS=$(cat result.log | sed -E 's/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/[REDACTED_EMAIL]/g')
-            LOGS=$(echo "$LOGS" | sed -E 's/[A-Za-z0-9-_]{20,}/[REDACTED_TOKEN]/g')
+            LOGS=$(cat result.log \
+              | sed -E 's/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/[REDACTED_EMAIL]/g' \
+              | sed -E 's/(sk_live|sk_test|ghp_|github_pat|api_key|token)[A-Za-z0-9-_]+/[REDACTED_SECRET]/g'
+            )
           fi
+
           curl -X POST "$KESTRA_WEBHOOK_URL" \
             -H "Content-Type: application/json" \
             -d "$(jq -n \
@@ -68,7 +73,9 @@ jobs:
         env:
           KESTRA_WEBHOOK_URL: ${{ secrets.KESTRA_WEBHOOK_URL }}
 
+  # ------------------------------------------------------------------
   # Security Scan
+  # ------------------------------------------------------------------
   security-scan:
     runs-on: ubuntu-latest
     steps:
@@ -83,14 +90,20 @@ jobs:
         working-directory: ./demo-app/frontend
         run: npm audit --audit-level=high || echo "::warning::Security vulnerabilities detected in frontend"
 
-  # Intentional failure for Kestra testing
+  # ------------------------------------------------------------------
+  # Intentional Failure (For Kestra Testing)
+  # ------------------------------------------------------------------
   intentional-failure:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' && github.event.head_commit && contains(github.event.head_commit.message, '[trigger-failure]') }}
+
+    if: >
+      github.event_name == 'push' &&
+      contains(toJson(github.event.commits), '[trigger-failure]')
+
     steps:
-      - name: Fail intentionally for Kestra
+      - name: Fail intentionally
         run: |
-          echo "🚨 Simulating a CI failure for Kestra test"
+          echo "🚨 Simulating CI Failure for Kestra"
           exit 1
 
       - name: Notify Kestra on intentional failure
