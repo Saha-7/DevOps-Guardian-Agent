@@ -46,16 +46,17 @@ async function sendToAgent(failureData) {
   try {
     const agentEndpoint = `${AGENT_URL}/agent/analyze`;
     console.log(`\n📤 Sending data to agent: ${agentEndpoint}`);
-    
+
+    const AGENT_TIMEOUT = parseInt(process.env.AGENT_TIMEOUT) || 60000;
+
     const response = await axios.post(agentEndpoint, failureData, {
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      timeout: 30000 // 30 second timeout
+      headers: { 'Content-Type': 'application/json' },
+      timeout: AGENT_TIMEOUT
     });
-    
+
     console.log('✅ Agent response:', response.data);
     return response.data;
+
   } catch (error) {
     console.error('❌ Error sending to agent:', error.message);
     if (error.response) {
@@ -65,6 +66,7 @@ async function sendToAgent(failureData) {
     throw error;
   }
 }
+
 
 /**
  * Main function - Check for failed runs and process them
