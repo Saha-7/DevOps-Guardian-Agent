@@ -14,28 +14,28 @@ import {
 const mockPipelines = [
   {
     id: 1,
-    repository: "acme/frontend",
+    repository: "DevOps-Guardian-Agent/backend",
     lastRunStatus: "failure",
-    lastRunAt: new Date("2024-12-10T10:30:00"),
-    successRate: 87,
-    failureCount: 8,
-    avgTimeToResolution: 45,
-  },
-  {
-    id: 2,
-    repository: "acme/backend",
-    lastRunStatus: "success",
-    lastRunAt: new Date("2024-12-10T09:15:00"),
+    lastRunAt: new Date("2025-12-14T10:22:42"),
     successRate: 95,
     failureCount: 3,
     avgTimeToResolution: 30,
   },
   {
+    id: 2,
+    repository: "DevOps-Guardian-Agent/frontend",
+    lastRunStatus: "success",
+    lastRunAt: new Date("2025-12-14T09:10:06"),
+    successRate: 87,
+    failureCount: 8,
+    avgTimeToResolution: 45,
+  },
+  {
     id: 3,
-    repository: "acme/mobile-app",
+    repository: "DevOps-Guardian-Agent/demo-app",
     lastRunStatus: "failure",
-    lastRunAt: new Date("2024-12-10T08:45:00"),
-    successRate: 78,
+    lastRunAt: new Date("2025-12-13T08:45:27"),
+    successRate: 72,
     failureCount: 12,
     avgTimeToResolution: 60,
   },
@@ -44,23 +44,33 @@ const mockPipelines = [
 const mockRecentFailures = [
   {
     id: "f1",
-    repository: "acme/frontend",
+    repository: "DevOps-Guardian-Agent/backend",
     branch: "main",
     workflowName: "CI/CD Pipeline",
     failureType: "build_error",
-    failedAt: new Date("2024-12-10T10:30:00"),
+    failedAt: new Date("2025-12-14T10:22:06"),
     status: "processing",
     prUrl: null,
   },
   {
     id: "f2",
-    repository: "acme/mobile-app",
+    repository: "DevOps-Guardian-Agent/frontend",
+    branch: "main",
+    workflowName: "CI/CD Pipeline",
+    failureType: "build_error",
+    failedAt: new Date("2025-12-14T10:30:06"),
+    status: "processing",
+    prUrl: null,
+  },
+  {
+    id: "f3",
+    repository: "DevOps-Guardian-Agent/demo-app",
     branch: "develop",
     workflowName: "Test Suite",
     failureType: "test_failure",
-    failedAt: new Date("2024-12-10T08:45:00"),
+    failedAt: new Date("2025-12-13T08:45:27"),
     status: "completed",
-    prUrl: "https://github.com/acme/mobile-app/pull/123",
+    prUrl: "https://github.com/DevOps-Guardian-Agent/demo-app/",
   },
 ];
 
@@ -77,9 +87,7 @@ const App = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Total Repositories</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {mockPipelines.length}
-              </p>
+              <p className="text-2xl font-bold text-gray-900">1</p>
             </div>
             <Activity className="w-8 h-8 text-blue-500" />
           </div>
@@ -441,7 +449,7 @@ const App = () => {
                 </p>
               </div>
             </div>
-            <div className="flex items-start space-x-3">
+            {/* <div className="flex items-start space-x-3">
               <div className="w-2 h-2 rounded-full bg-yellow-500 mt-2 animate-pulse" />
               <div className="flex-1">
                 <p className="font-medium text-gray-900">
@@ -452,7 +460,7 @@ const App = () => {
                 </p>
                 <p className="text-xs text-gray-400 mt-1">In progress</p>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
